@@ -55,3 +55,51 @@ export const signup = asyncHandler(async (req, res) => {
     });
 });
 
+
+
+/*
+|--------------------------------------------------------------------------
+| LOGIN CONTROLLER
+|--------------------------------------------------------------------------
+*/
+export const login = asyncHandler(async (req, res) => {
+    const {email, password} = req.body;
+
+    if(!email || !password) {
+        res.status(400);
+        throw new Error("All fields are required")
+    }
+
+    const existingUser = await UserModel.findByEmail(email);
+
+    if(!existingUser) {
+        res.status(401);
+        throw new Error("Invalid email or password")
+    }
+
+    const passwordValid = await bcrypt.compare(password, existingUser.password);
+  
+    if(!passwordValid) {
+        res.status(401);
+        throw new Error("Invalid email or password")
+    }
+
+    const token = generateToken({
+        id: existingUser.id,
+        email: existingUser.email,
+        role: existingUser.role || "student",
+    }) 
+
+    return res.status(200).json({
+        success: true,
+        message: "User logged in successfully",
+        user: {
+            id: existingUser.id,
+            username: existingUser.username,
+            email: existingUser.email,
+            role: existingUser.role,
+        },
+        token
+    })
+
+})
