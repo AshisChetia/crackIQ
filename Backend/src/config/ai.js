@@ -291,6 +291,68 @@ JSON Format:
 
 
 /* -------------------------------------------------------------------------- */
+/*                         COMPARE RESUME TO JOB ROLE                         */
+/* -------------------------------------------------------------------------- */
+
+/*
+|--------------------------------------------------------------------------
+| compareResumeToJob()
+|--------------------------------------------------------------------------
+|
+| Compares a resume against a target role.
+|
+| Returns:
+| - match percentage
+| - missing skills
+| - strengths
+| - improvements
+|
+*/
+export const compareResumeToJob = async ({
+    resumeText,
+    targetRole,
+}) => {
+    try {
+        const prompt = `
+You are a professional career advisor.
+
+Compare this resume against the role: ${targetRole}
+
+Resume Content:
+${resumeText}
+
+Return ONLY valid JSON.
+
+JSON Format:
+{
+    "matchPercentage": 75,
+    "strengths": [
+        "Relevant backend experience"
+    ],
+    "missingSkills": [
+        "Docker",
+        "Kubernetes"
+    ],
+    "improvements": [
+        "Add more quantifiable achievements"
+    ]
+}
+`;
+
+        const result = await model.generateContent(prompt);
+
+        const response = result.response.text();
+
+        return cleanJsonResponse(response);
+    } catch (error) {
+        console.error("Resume Comparison Error:", error.message);
+
+        throw new Error("Failed to compare resume");
+    }
+};
+
+
+/* -------------------------------------------------------------------------- */
 /*                            GENERIC AI REQUEST                              */
 /* -------------------------------------------------------------------------- */
 

@@ -6,5 +6,6 @@ node_modules/
 .env.*
 !.env.example
 
-Backend/getAdmin.js
-Backend/seedAdmin.js
+
+
+Backend/app details and structure.md

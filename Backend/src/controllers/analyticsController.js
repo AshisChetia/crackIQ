@@ -1,8 +1,8 @@
 import asyncHandler from "express-async-handler";
-
-import ExamAttemptModel from "../models/examAttemptModel.js";
 import ExamModel from "../models/examModel.js";
 import ResumeModel from "../models/resumeModel.js";
+import ExamAttemptModel from "../models/examAttemptModel.js";
+import { sendSuccess } from "../utils/apiResponse.js";
 
 /*
 |--------------------------------------------------------------------------
@@ -44,34 +44,17 @@ export const getDashboardAnalytics = asyncHandler(async (req, res) => {
             userId
         );
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Dashboard analytics fetched", {
         analytics: {
-
             exams: {
-
-                total_exam_attempts:
-                    totalExamAttempts,
-
-                total_created_exams:
-                    totalCreatedExams,
-
-                average_score:
-                    averageScore,
-
-                highest_score:
-                    highestScore,
-
-                recent_attempts:
-                    recentAttempts,
+                total_exam_attempts: totalExamAttempts,
+                total_created_exams: totalCreatedExams,
+                average_score: averageScore,
+                highest_score: highestScore,
+                recent_attempts: recentAttempts,
             },
-
             resumes: {
-
-                total_resume_analyses:
-                    totalResumeAnalyses,
+                total_resume_analyses: totalResumeAnalyses,
             },
         },
     });
@@ -92,12 +75,8 @@ export const getSubjectPerformance = asyncHandler(async (req, res) => {
             userId
         );
 
-    return res.status(200).json({
-
-        success: true,
-
-        subject_performance:
-            subjectPerformance,
+    return sendSuccess(res, 200, "Subject performance fetched", {
+        subject_performance: subjectPerformance,
     });
 });
 
@@ -116,12 +95,8 @@ export const getWeeklyPerformance = asyncHandler(async (req, res) => {
             userId
         );
 
-    return res.status(200).json({
-
-        success: true,
-
-        weekly_performance:
-            weeklyPerformance,
+    return sendSuccess(res, 200, "Weekly performance fetched", {
+        weekly_performance: weeklyPerformance,
     });
 });
 
@@ -145,17 +120,10 @@ export const getStrengthAnalysis = asyncHandler(async (req, res) => {
             userId
         );
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Strength analysis fetched", {
         analysis: {
-
-            strongest_subject:
-                strongestSubject,
-
-            weakest_subject:
-                weakestSubject,
+            strongest_subject: strongestSubject,
+            weakest_subject: weakestSubject,
         },
     });
 });
@@ -175,12 +143,8 @@ export const getAccuracyAnalytics = asyncHandler(async (req, res) => {
             userId
         );
 
-    return res.status(200).json({
-
-        success: true,
-
-        accuracy:
-            accuracyData,
+    return sendSuccess(res, 200, "Accuracy analytics fetched", {
+        accuracy: accuracyData,
     });
 });
 
@@ -199,10 +163,7 @@ export const getUserActivityAnalytics = asyncHandler(async (req, res) => {
             userId
         );
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "User activity fetched", {
         activity,
     });
 });
@@ -244,20 +205,11 @@ export const getResumeAnalytics = asyncHandler(async (req, res) => {
             )
             : 0;
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Resume analytics fetched", {
         resume_analytics: {
-
-            total_resumes:
-                resumes.length,
-
-            average_ats_score:
-                averageATSScore,
-
-            highest_ats_score:
-                highestATSScore,
+            total_resumes: resumes.length,
+            average_ats_score: averageATSScore,
+            highest_ats_score: highestATSScore,
         },
     });
 });
@@ -293,23 +245,12 @@ export const getOverallStats = asyncHandler(async (req, res) => {
             userId
         );
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Overall stats fetched", {
         stats: {
-
-            total_exams:
-                totalExams,
-
-            total_resume_analyses:
-                totalResumes,
-
-            average_exam_score:
-                averageScore,
-
-            average_ats_score:
-                averageATS,
+            total_exams: totalExams,
+            total_resume_analyses: totalResumes,
+            average_exam_score: averageScore,
+            average_ats_score: averageATS,
         },
     });
 });

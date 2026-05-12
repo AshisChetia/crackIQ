@@ -2,15 +2,14 @@ import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 
 import UserModel from "../models/userModel.js";
-import ResumeModel from "../models/resumeModel.js";
-import ExamAttemptModel from "../models/examAttemptModel.js";
+import { sendSuccess } from "../utils/apiResponse.js";
 
 /*
 |--------------------------------------------------------------------------
 | GET CURRENT USER PROFILE
 |--------------------------------------------------------------------------
 */
-export const getCurrentUser = asyncHandler(async (req, res) => {
+export const getProfile = asyncHandler(async (req, res) => {
 
     const userId = req.user.id;
 
@@ -31,10 +30,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 
     const { password, ...safeUser } = user;
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Profile fetched", {
         user: safeUser,
     });
 });
@@ -94,13 +90,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
     const { password, ...safeUser } = updatedUser;
 
-    return res.status(200).json({
-
-        success: true,
-
-        message:
-            "Profile updated successfully",
-
+    return sendSuccess(res, 200, "Profile updated successfully", {
         user: safeUser,
     });
 });
@@ -165,13 +155,7 @@ export const changePassword = asyncHandler(async (req, res) => {
         hashedPassword
     );
 
-    return res.status(200).json({
-
-        success: true,
-
-        message:
-            "Password changed successfully",
-    });
+    return sendSuccess(res, 200, "Password changed successfully");
 });
 
 
@@ -186,78 +170,10 @@ export const deleteAccount = asyncHandler(async (req, res) => {
 
     await UserModel.deleteOne(userId);
 
-    return res.status(200).json({
-
-        success: true,
-
-        message:
-            "Account deleted successfully",
-    });
+    return sendSuccess(res, 200, "Account deleted successfully");
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| GET USER DASHBOARD SUMMARY
-|--------------------------------------------------------------------------
-*/
-export const getUserDashboardSummary = asyncHandler(async (req, res) => {
-
-    const userId = req.user.id;
-
-    const totalExamAttempts =
-        await ExamAttemptModel.countUserAttempts(
-            userId
-        );
-
-    const averageScore =
-        await ExamAttemptModel.getAverageScore(
-            userId
-        );
-
-    const totalResumeAnalyses =
-        await ResumeModel.countUserResumes(
-            userId
-        );
-
-
-    const user =
-        await UserModel.findById(userId);
-
-    return res.status(200).json({
-
-        success: true,
-
-        dashboard: {
-
-            user: {
-
-                id: user.id,
-
-                username:
-                    user.username,
-
-                email:
-                    user.email,
-            },
-
-            exams: {
-
-                total_attempts:
-                    totalExamAttempts,
-
-                average_score:
-                    averageScore,
-            },
-
-            resumes: {
-
-                total_resume_analyses:
-                    totalResumeAnalyses,
-            },
-        },
-    });
-});
 
 
 /*
@@ -297,10 +213,7 @@ export const getUserPublicProfile = asyncHandler(async (req, res) => {
         created_at: user.created_at,
     };
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Public profile fetched", {
         user: publicProfile,
     });
 });

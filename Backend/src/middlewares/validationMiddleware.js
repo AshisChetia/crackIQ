@@ -96,3 +96,108 @@ export const validateLogin = (
 
     next();
 };
+
+
+/*
+|--------------------------------------------------------------------------
+| Validate Create Exam
+|--------------------------------------------------------------------------
+*/
+
+export const validateCreateExam = (
+    req,
+    res,
+    next
+) => {
+
+    const {
+        exam_name,
+        subject,
+        difficulty,
+        total_questions,
+    } = req.body;
+
+    if (
+        !exam_name ||
+        !subject ||
+        !difficulty ||
+        !total_questions
+    ) {
+        res.status(400);
+
+        throw new Error(
+            "All exam fields are required"
+        );
+    }
+
+    const allowedDifficulties = [
+        "easy",
+        "medium",
+        "hard",
+    ];
+
+    if (
+        !allowedDifficulties.includes(difficulty)
+    ) {
+        res.status(400);
+
+        throw new Error(
+            "Invalid difficulty level"
+        );
+    }
+
+    if (
+        total_questions < 5 ||
+        total_questions > 50
+    ) {
+        res.status(400);
+
+        throw new Error(
+            "Questions must be between 5 and 50"
+        );
+    }
+
+    next();
+};
+
+
+/*
+|--------------------------------------------------------------------------
+| Validate Submit Exam
+|--------------------------------------------------------------------------
+*/
+
+export const validateSubmitExam = (
+    req,
+    res,
+    next
+) => {
+
+    const {
+        exam_id,
+        answers,
+    } = req.body;
+
+    if (!exam_id || !answers) {
+
+        res.status(400);
+
+        throw new Error(
+            "Exam ID and answers are required"
+        );
+    }
+
+    if (
+        !Array.isArray(answers) ||
+        answers.length === 0
+    ) {
+
+        res.status(400);
+
+        throw new Error(
+            "Invalid answers format"
+        );
+    }
+
+    next();
+};

@@ -1,11 +1,13 @@
 import asyncHandler from "express-async-handler";
 import { generateMCQs } from "../config/ai.js";
+import { sendSuccess } from "../utils/apiResponse.js";
+import { generateExamTime } from "../utils/generateExamTime.js";
 
 
 import ExamModel from "../models/examModel.js"
 import QuestionModel from "../models/questionModel.js";
-import ExamAttemptModel from "../models/examAttemptModel.js";
 import UserAnswerModel from "../models/userAnswerModel.js";
+import ExamAttemptModel from "../models/examAttemptModel.js";
 
 
 /*
@@ -52,7 +54,8 @@ export const createExam = asyncHandler(async (req, res) => {
         throw new Error("Failed to generate exam questions");
     }
 
-    const duration_minutes = total_questions;
+    //Calculate Exam Duration Based On Difficulty
+    const duration_minutes = generateExamTime(total_questions, difficulty);
 
     const exam = await ExamModel.createOne({
         user_id: userId,
@@ -81,18 +84,9 @@ export const createExam = asyncHandler(async (req, res) => {
         options: q.options
     }))
 
-    return res.status(201).json({
-        success: true,
-        message: "Exam created successfully",
-        exam: {
-            id: exam.id,
-            exam_name,
-            subject,
-            difficulty,
-            total_questions,
-            duration_minutes,
-        },
-
+    return sendSuccess(res, 201, "Exam created successfully", {
+        examId: exam.id,
+        duration_minutes,
         questions: safeQuestions,
     });
 });
@@ -199,17 +193,14 @@ export const submitExam = asyncHandler(async (req, res) => {
     //Save User Answers
     await UserAnswerModel.createMany(formattedAnswers)
 
-    return res.status(200).json({
-        success: true,
-        message: "Exam submitted successfully",
+    return sendSuccess(res, 200, "Exam submitted successfully", {
         result: {
             score,
             total_questions: questions.length,
             correct_answers: correctAnswers,
             wrong_answers: wrongAnswers,
         },
-
-        answers: answerResults
+        answers: answerResults,
     });
 });
 
@@ -250,10 +241,7 @@ export const getExamById = asyncHandler(async (req, res) => {
         options: JSON.parse(q.options),
     }));
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Exam fetched successfully", {
         exam: {
             id: exam.id,
             exam_name: exam.exam_name,
@@ -278,12 +266,8 @@ export const getExamHistory = asyncHandler(async (req, res) => {
 
     const history = await ExamAttemptModel.findByUserId(userId);
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Exam history fetched", {
         total_attempts: history.length,
-
         history,
     });
 });
@@ -314,12 +298,8 @@ export const getExamResult = asyncHandler(async (req, res) => {
 
     const answers = await UserAnswerModel.findByAttemptId(attemptId);
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Exam result fetched", {
         result: attempt,
-
         answers,
     });
 });
@@ -358,12 +338,7 @@ export const deleteExam = asyncHandler(async (req, res) => {
 
     await ExamModel.deleteOne(examId);
 
-    return res.status(200).json({
-
-        success: true,
-
-        message: "Exam deleted successfully",
-    });
+    return sendSuccess(res, 200, "Exam deleted successfully");
 });
 
 
@@ -421,71 +396,9 @@ export const regenerateQuestions = asyncHandler(async (req, res) => {
         options: q.options,
     }));
 
-    return res.status(200).json({
-        success: true,
-        message: "Questions regenerated successfully",
-        questions: safeQuestions
-    });
-});
-
-/*
-| DASHBOARD ANALYTICS
-|--------------------------------------------------------------------------
-*/
-export const getDashboardAnalytics = asyncHandler(async (req, res) => {
-
-    const userId = req.user.id;
-
-    const totalExams = await ExamAttemptModel.countUserAttempts(userId);
-
-    const averageScore = await ExamAttemptModel.getAverageScore(userId);
-
-    const highestScore = await ExamAttemptModel.getHighestScore(userId);
-
-    const latestAttempts = await ExamAttemptModel.getRecentAttempts(userId);
-
-    return res.status(200).json({
-
-        success: true,
-
-        analytics: {
-            total_exams: totalExams,
-            average_score: averageScore,
-            highest_score: highestScore,
-            recent_attempts: latestAttempts,
-        },
+    return sendSuccess(res, 200, "Questions regenerated successfully", {
+        questions: safeQuestions,
     });
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| GENERATE PERFORMANCE FEEDBACK
-|--------------------------------------------------------------------------
-*/
-export const generatePerformanceFeedback = asyncHandler(async (req, res) => {
-
-    const userId = req.user.id;
-
-    const performanceData =
-        await ExamAttemptModel.getUserPerformance(userId);
-
-    if (!performanceData || performanceData.length === 0) {
-        res.status(404);
-
-        throw new Error("No performance data found");
-    }
-
-    const feedbackPrompt = {
-        performance: performanceData,
-    };
-
-    const feedback = await generateMCQs(feedbackPrompt);
-
-    return res.status(200).json({
-
-        success: true,
-
-        feedback,
-    });
-});

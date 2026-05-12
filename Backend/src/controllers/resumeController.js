@@ -1,8 +1,34 @@
 import asyncHandler from "express-async-handler";
 
 import ResumeModel from "../models/resumeModel.js";
+import { analyzeResume, compareResumeToJob } from "../config/ai.js";
+import { uploadToCloudinary } from "../middlewares/uploadMiddleware.js";
+import { sendSuccess } from "../utils/apiResponse.js";
+import pdfParse from "pdf-parse";
 
-import { extractResumeText, analyzeResume, compareResumeToJob} from "../services/resumeService.js"
+
+/*
+|--------------------------------------------------------------------------
+| EXTRACT RESUME TEXT
+|--------------------------------------------------------------------------
+|
+| Extracts text from PDF file buffers.
+|
+*/
+const extractResumeText = async (fileBuffer) => {
+    try {
+        const pdfData = await pdfParse(fileBuffer);
+
+        if (pdfData.text) {
+            return pdfData.text;
+        }
+
+        return null;
+    } catch (error) {
+        console.error("Resume text extraction error:", error.message);
+        return null;
+    }
+};
 
 
 /*
@@ -14,102 +40,66 @@ export const uploadResume = asyncHandler(async (req, res) => {
 
     const userId = req.user.id;
 
-    //Validate File Upload
-    if(!req.file) {
+    if (!req.file) {
         res.status(400);
         throw new Error("Resume file is required");
     }
 
-    //Validate File Type
-    const allowedMimeTypes = [
-        "application/pdf",
+    // Upload Resume To Cloudinary
+    const cloudinaryResult = await uploadToCloudinary(
+        req.file.buffer,
+        req.file.originalname
+    );
 
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-    
-    if(!allowedMimeTypes.includes(req.file.mimetype)) {
-        res.status(400);
-        throw new Error("Only PDF and DOCX files are allowed")
+    if (!cloudinaryResult) {
+        res.status(500);
+        throw new Error("Failed to upload resume");
     }
 
-    //Extract Resume Text
-    const resumeText =
-        await extractResumeText(req.file.path);
+    const resumeUrl = cloudinaryResult.secure_url;
+
+    // Extract Resume Text
+    const resumeText = await extractResumeText(req.file.buffer);
 
     if (!resumeText) {
-
         res.status(500);
-
-        throw new Error(
-            "Failed to extract resume text"
-        );
+        throw new Error("Failed to extract resume text");
     }
 
-    //Analyze Resume Using AI
-    const analysis =
-        await analyzeResume(resumeText);
+    // Analyze Resume Using AI
+    const analysis = await analyzeResume({
+        resumeText,
+        targetRole: req.body.target_role || "General",
+    });
 
     if (!analysis) {
-
         res.status(500);
-
-        throw new Error(
-            "Failed to analyze resume"
-        );
+        throw new Error("Failed to analyze resume");
     }
 
-    //Save Resume Analysis
-    const savedResume =
-        await ResumeModel.createOne({
+    // Save Resume Analysis
+    const savedResume = await ResumeModel.createOne({
+        user_id: userId,
+        resume_url: resumeUrl,
+        ats_score: analysis.atsScore,
+        strengths: JSON.stringify(analysis.strengths),
+        weaknesses: JSON.stringify(analysis.weaknesses),
+        missing_skills: JSON.stringify(analysis.missingSkills),
+        suggestions: JSON.stringify(analysis.suggestions),
+    });
 
-            user_id: userId,
-
-            resume_url: req.file.path,
-
-            ats_score: analysis.atsScore,
-
-            strengths: JSON.stringify(
-                analysis.strengths
-            ),
-
-            weaknesses: JSON.stringify(
-                analysis.weaknesses
-            ),
-
-            missing_skills: JSON.stringify(
-                analysis.missingSkills
-            ),
-
-            suggestions: JSON.stringify(
-                analysis.suggestions
-            ),
-        });
-
-    return res.status(201).json({
-
-        success: true,
-
-        message:
-            "Resume analyzed successfully",
-
+    return sendSuccess(res, 201, "Resume analyzed successfully", {
         resume: {
-
             id: savedResume.id,
-
-            ats_score: analysis.atsScore,
-
+            resume_url: savedResume.resume_url,
+            ats_score: savedResume.ats_score,
             strengths: analysis.strengths,
-
             weaknesses: analysis.weaknesses,
-
-            missing_skills:
-                analysis.missingSkills,
-
-            suggestions:
-                analysis.suggestions,
+            missing_skills: analysis.missingSkills,
+            suggestions: analysis.suggestions,
         },
     });
-})
+});
 
 
 /*
@@ -117,19 +107,14 @@ export const uploadResume = asyncHandler(async (req, res) => {
 | GET RESUME HISTORY
 |--------------------------------------------------------------------------
 */
-export const getResumeHistory =  asyncHandler(async (req, res) => {
+export const getResumeHistory = asyncHandler(async (req, res) => {
 
     const userId = req.user.id;
 
-    const resumes =
-        await ResumeModel.findByUserId(userId);
+    const resumes = await ResumeModel.findByUserId(userId);
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Resume history fetched", {
         total_resumes: resumes.length,
-
         resumes,
     });
 });
@@ -145,45 +130,24 @@ export const getResumeAnalysisById = asyncHandler(async (req, res) => {
     const { resumeId } = req.params;
 
     if (!resumeId) {
-
         res.status(400);
-
-        throw new Error(
-            "Resume ID is required"
-        );
+        throw new Error("Resume ID is required");
     }
 
-    const resume =
-        await ResumeModel.findById(resumeId);
+    const resume = await ResumeModel.findById(resumeId);
 
     if (!resume) {
-
         res.status(404);
-
-        throw new Error(
-            "Resume analysis not found"
-        );
+        throw new Error("Resume analysis not found");
     }
 
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Resume analysis fetched", {
         resume: {
-
             ...resume,
-
-            strengths:
-                JSON.parse(resume.strengths),
-
-            weaknesses:
-                JSON.parse(resume.weaknesses),
-
-            missing_skills:
-                JSON.parse(resume.missing_skills),
-
-            suggestions:
-                JSON.parse(resume.suggestions),
+            strengths: JSON.parse(resume.strengths),
+            weaknesses: JSON.parse(resume.weaknesses),
+            missing_skills: JSON.parse(resume.missing_skills),
+            suggestions: JSON.parse(resume.suggestions),
         },
     });
 });
@@ -201,45 +165,26 @@ export const deleteResumeAnalysis = asyncHandler(async (req, res) => {
     const { resumeId } = req.params;
 
     if (!resumeId) {
-
         res.status(400);
-
-        throw new Error(
-            "Resume ID is required"
-        );
+        throw new Error("Resume ID is required");
     }
 
-    const resume =
-        await ResumeModel.findById(resumeId);
+    const resume = await ResumeModel.findById(resumeId);
 
     if (!resume) {
-
         res.status(404);
-
-        throw new Error(
-            "Resume analysis not found"
-        );
+        throw new Error("Resume analysis not found");
     }
 
     //Authorization check
     if (resume.user_id !== userId) {
-
         res.status(403);
-
-        throw new Error(
-            "Unauthorized access"
-        );
+        throw new Error("Unauthorized access");
     }
 
     await ResumeModel.deleteOne(resumeId);
 
-    return res.status(200).json({
-
-        success: true,
-
-        message:
-            "Resume analysis deleted successfully",
-    });
+    return sendSuccess(res, 200, "Resume analysis deleted successfully");
 });
 
 
@@ -255,45 +200,24 @@ export const compareResumeWithJob = asyncHandler(async (req, res) => {
     const { target_role } = req.body;
 
     if (!resumeId || !target_role) {
-
         res.status(400);
-
-        throw new Error(
-            "Resume ID and target role are required"
-        );
+        throw new Error("Resume ID and target role are required");
     }
 
-    const resume =
-        await ResumeModel.findById(resumeId);
+    const resume = await ResumeModel.findById(resumeId);
 
     if (!resume) {
-
         res.status(404);
-
-        throw new Error(
-            "Resume not found"
-        );
+        throw new Error("Resume not found");
     }
 
-    //Extract resume text again
-    const resumeText =
-        await extractResumeText(
-            resume.resume_url
-        );
+    // Compare resume with job role using AI
+    const comparison = await compareResumeToJob({
+        resumeText: resume.resume_url,
+        targetRole: target_role,
+    });
 
-    //Compare resume with job roles
-    const comparison =
-        await compareResumeToJob({
-
-            resumeText,
-
-            targetRole: target_role,
-        });
-
-    return res.status(200).json({
-
-        success: true,
-
+    return sendSuccess(res, 200, "Resume compared successfully", {
         comparison,
     });
 });
