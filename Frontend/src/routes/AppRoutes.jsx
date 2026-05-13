@@ -10,6 +10,7 @@ import HistoryPage from '../pages/History/HistoryPage';
 import ResumePage from '../pages/Resume/ResumePage';
 import AboutPage from '../pages/About/AboutPage';
 import NotFound from '../pages/NotFound/NotFound';
+import AuthLayout from '../components/layout/AuthLayout';
 
 const AppRoutes = () => {
   return (
@@ -20,13 +21,15 @@ const AppRoutes = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/about" element={<AboutPage />} />
 
-      {/* Authenticated (protection to be added later) */}
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/exam/setup" element={<ExamSetup />} />
-      <Route path="/exam/active" element={<ExamPage />} />
-      <Route path="/exam/results" element={<ResultPage />} />
-      <Route path="/history" element={<HistoryPage />} />
-      <Route path="/resume" element={<ResumePage />} />
+      {/* Authenticated - Protected by AuthLayout */}
+      <Route element={<AuthLayout />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/exam/setup" element={<ExamSetup />} />
+        <Route path="/exam/active" element={<ExamPage />} />
+        <Route path="/exam/results" element={<ResultPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/resume" element={<ResumePage />} />
+      </Route>
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />

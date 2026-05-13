@@ -1,11 +1,12 @@
 import { BrowserRouter } from 'react-router-dom';
-import Navbar from './components/common/Navbar';
 import AppRoutes from './routes/AppRoutes';
 
 function App() {
   return (
     <BrowserRouter>
-      <Navbar />
+      {/* Navbar is intentionally removed from here.
+          It will only render on authenticated routes (post-login).
+          The landing page has its own minimal header. */}
       <AppRoutes />
     </BrowserRouter>
   );

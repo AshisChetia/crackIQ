@@ -21,7 +21,12 @@ const app = express();
 
 // Body parsing
 app.use(express.json());
-app.use(cors());
+app.use(cors(
+    {
+        origin: "http://localhost:5173",
+        credentials: true,
+    }
+));
 
 // Global rate limiter
 app.use(apiLimiter);
