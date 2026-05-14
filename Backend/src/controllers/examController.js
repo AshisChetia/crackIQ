@@ -238,7 +238,7 @@ export const getExamById = asyncHandler(async (req, res) => {
 
         question: q.question_text,
 
-        options: JSON.parse(q.options),
+        options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
     }));
 
     return sendSuccess(res, 200, "Exam fetched successfully", {
@@ -380,7 +380,7 @@ export const regenerateQuestions = asyncHandler(async (req, res) => {
 
         options: JSON.stringify(q.options),
 
-        correct_answer: q.correctAnswer,
+        correct_answer: q.correct_answer,
 
         explanation: q.explanation || "",
     }));

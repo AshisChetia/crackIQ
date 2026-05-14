@@ -4,7 +4,7 @@ import { gsap } from 'gsap';
 import api from '../../api/axios';
 
 const Register = () => {
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const formRef = useRef(null);
@@ -26,7 +26,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
-    if (!form.name) return setErrors({ name: 'Name is required' });
+    if (!form.username) return setErrors({ username: 'Name is required' });
     if (!form.email) return setErrors({ email: 'Email is required' });
     if (!form.password) return setErrors({ password: 'Password is required' });
     
@@ -70,13 +70,13 @@ const Register = () => {
               <label className="text-[10px] font-semibold uppercase tracking-widest text-outline">Full Name</label>
               <input
                 type="text"
-                name="name"
+                name="username"
                 placeholder="John Doe"
-                value={form.name}
+                value={form.username}
                 onChange={handleChange}
-                className={`w-full bg-surface-lowest border ${errors.name ? 'border-danger' : 'border-outline-variant/30'} rounded-xl px-5 py-4 text-light placeholder:text-outline focus:outline-none focus:border-primary focus:bg-surface-container transition-all`}
+                className={`w-full bg-surface-lowest border ${errors.username ? 'border-danger' : 'border-outline-variant/30'} rounded-xl px-5 py-4 text-light placeholder:text-outline focus:outline-none focus:border-primary focus:bg-surface-container transition-all`}
               />
-              {errors.name && <span className="text-[11px] text-danger mt-1">{errors.name}</span>}
+              {errors.username && <span className="text-[11px] text-danger mt-1">{errors.username}</span>}
             </div>
 
             {/* Email Field */}

@@ -1,73 +1,102 @@
-import { Link } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, CheckCircle2, XCircle, ChevronDown, Clock, Target } from 'lucide-react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { Target, CheckCircle2, XCircle, BarChart3, RotateCcw, Home, ChevronRight, Zap } from 'lucide-react';
 
 const ResultPage = () => {
-  const score = 85;
-  const totalTime = '42:15';
-  const results = [
-    { q: 'Q.01', topic: 'Distributed Transactions', correct: true, yourAnswer: 'Saga Pattern', correctAnswer: 'Saga Pattern', analysis: 'Employed the Strangler Fig pattern to systematically decouple services while maintaining CI/CD velocity.' },
-    { q: 'Q.02', topic: 'Data Structure Efficiency', correct: false, yourAnswer: 'Hash Table', correctAnswer: 'Balanced BST', analysis: 'While Hash Tables offer O(1) average case, balanced BSTs provide guaranteed O(log n) worst case.' },
-    { q: 'Q.03', topic: 'Kernel Architecture', correct: true, yourAnswer: 'Better Modularity', correctAnswer: 'Better Modularity', analysis: 'Microkernels offer superior fault isolation by running services in user space.' },
-  ];
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { result } = location.state || {};
+
+  if (!result) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-dark">
+        <div className="w-20 h-20 rounded-3xl bg-surface-container flex items-center justify-center mb-6">
+          <BarChart3 size={32} className="text-outline" />
+        </div>
+        <h2 className="text-2xl font-bold text-light mb-2">No Results Found</h2>
+        <p className="text-outline mb-8 max-w-xs">We couldn't retrieve the performance data for this session.</p>
+        <Link to="/dashboard" className="px-8 py-3 bg-primary text-dark font-bold rounded-xl flex items-center gap-2">
+          <Home size={18} /> Return to Dashboard
+        </Link>
+      </div>
+    );
+  }
+
+  const scorePercentage = Math.round((result.score / result.total_questions) * 100);
+  const isPassed = scorePercentage >= 70;
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
-      <div className="max-w-4xl mx-auto px-4 lg:px-6">
-        {/* Back */}
-        <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-light-muted hover:text-light mb-8 transition-colors">
-          <ArrowLeft size={14} /> Return to Dashboard
-        </Link>
+    <div className="animate-fade-in p-8 md:p-12 max-w-5xl mx-auto w-full">
+      {/* Header */}
+      <div className="text-center mb-12">
+        <div className={`inline-flex items-center justify-center w-20 h-20 rounded-[2rem] mb-6 shadow-2xl ${isPassed ? 'bg-success/10 text-success border border-success/20' : 'bg-warning/10 text-warning border border-warning/20'}`}>
+          <Zap size={32} fill="currentColor" className={isPassed ? 'text-success' : 'text-warning'} />
+        </div>
+        <h1 className="text-3xl lg:text-5xl font-bold tracking-tight mb-3 text-light">Diagnostic Complete</h1>
+        <p className="text-outline max-w-lg mx-auto">The cognitive engine has analyzed your responses and generated a performance profile.</p>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Score Card */}
-          <div className="lg:col-span-1 rounded-2xl border border-border-subtle bg-light/[0.02] p-6 text-center animate-fade-in-up self-start">
-            <div className="text-[0.65rem] font-mono text-light-muted uppercase tracking-widest mb-2">Assessment Complete</div>
-            <div className="text-6xl font-bold font-mono tracking-tighter mb-1">{score}<span className="text-2xl text-light-dim">/100</span></div>
-            <div className="text-xs text-light-muted mb-6">Advanced Cognitive Fit</div>
-            <div className="flex items-center justify-center gap-4 mb-6 text-light-dim">
-              <div className="flex items-center gap-1.5 text-xs"><Clock size={12} />{totalTime}</div>
-              <div className="flex items-center gap-1.5 text-xs"><Target size={12} />{results.filter(r => r.correct).length}/{results.length} correct</div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <button className="w-full px-4 py-2.5 text-sm font-semibold text-dark bg-light rounded-full hover:bg-light/90 transition-all cursor-pointer border-none">
-                <span className="flex items-center justify-center gap-2"><RotateCcw size={14} /> Retake with Same Parameters</span>
-              </button>
-              <Link to="/exam/setup" className="w-full px-4 py-2.5 text-sm font-medium text-light-2 border border-border-subtle rounded-full hover:bg-light/[0.04] transition-all text-center">
-                New Exam
-              </Link>
-            </div>
-          </div>
-
-          {/* Response Analysis */}
-          <div className="lg:col-span-2 animate-fade-in-up" style={{ animationDelay: '0.15s', opacity: 0 }}>
-            <h2 className="text-lg font-bold mb-4">Response Analysis</h2>
-            <div className="flex flex-col gap-3">
-              {results.map((r, i) => (
-                <div key={i} className={`rounded-xl border p-5 transition-all ${r.correct ? 'border-green-500/20 bg-green-500/[0.03]' : 'border-red-500/20 bg-red-500/[0.03]'}`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      {r.correct ? <CheckCircle2 size={16} className="text-green-400" /> : <XCircle size={16} className="text-red-400" />}
-                      <span className="text-xs font-mono text-light-muted">{r.q}</span>
-                    </div>
-                    <span className="text-xs text-light-dim">{r.topic}</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                    <div>
-                      <div className="text-[0.65rem] text-light-dim uppercase tracking-wider mb-1">Your Answer</div>
-                      <div className={`text-sm font-medium ${r.correct ? 'text-green-400' : 'text-red-400'}`}>{r.yourAnswer}</div>
-                    </div>
-                    {!r.correct && (
-                      <div>
-                        <div className="text-[0.65rem] text-light-dim uppercase tracking-wider mb-1">Correct Answer</div>
-                        <div className="text-sm font-medium text-green-400">{r.correctAnswer}</div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-xs text-light-muted leading-relaxed border-t border-border-subtle pt-3 mt-1">{r.analysis}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Main Score Card */}
+        <div className="lg:col-span-8">
+           <div className="bg-surface-lowest/50 border border-outline-variant/20 rounded-[2.5rem] p-10 lg:p-16 relative overflow-hidden backdrop-blur-xl">
+              <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+              
+              <div className="flex flex-col items-center text-center relative z-10">
+                <div className="text-[10px] font-bold text-outline uppercase tracking-[0.3em] mb-4">Precision Metric</div>
+                <div className="relative mb-8">
+                   <svg className="w-48 h-48 -rotate-90">
+                      <circle cx="96" cy="96" r="88" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-surface-container" />
+                      <circle cx="96" cy="96" r="88" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-primary" strokeDasharray={552.92} strokeDashoffset={552.92 - (552.92 * scorePercentage) / 100} strokeLinecap="round" />
+                   </svg>
+                   <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-6xl font-bold font-mono text-light tracking-tighter">{scorePercentage}%</span>
+                      <span className="text-[8px] font-bold text-outline uppercase tracking-widest mt-1">Accuracy</span>
+                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+
+                <div className="grid grid-cols-3 gap-8 w-full max-w-md pt-8 border-t border-outline-variant/10">
+                   <div>
+                      <div className="text-2xl font-bold text-light font-mono">{result.score}</div>
+                      <div className="text-[8px] text-outline uppercase font-bold tracking-widest">Total Correct</div>
+                   </div>
+                   <div>
+                      <div className="text-2xl font-bold text-light font-mono">{result.total_questions}</div>
+                      <div className="text-[8px] text-outline uppercase font-bold tracking-widest">Questions</div>
+                   </div>
+                   <div>
+                      <div className="text-2xl font-bold text-warning font-mono">{result.wrong_answers}</div>
+                      <div className="text-[8px] text-outline uppercase font-bold tracking-widest">Deductions</div>
+                   </div>
+                </div>
+              </div>
+           </div>
+        </div>
+
+        {/* Side Actions */}
+        <div className="lg:col-span-4 flex flex-col gap-4">
+           <div className="p-8 bg-surface-lowest/50 border border-outline-variant/20 rounded-[2rem] backdrop-blur-md">
+              <h3 className="text-sm font-bold text-light mb-4 flex items-center gap-2">
+                 <Target size={16} className="text-primary" /> Analysis Insights
+              </h3>
+              <p className="text-xs text-outline leading-relaxed mb-6">
+                Your performance indicates a strong grasp of {isPassed ? 'foundational concepts' : 'the core subjects'}, though there are opportunities for precision refinement in advanced scenarios.
+              </p>
+              <div className="space-y-3">
+                 <div className="flex items-center gap-3 text-xs text-light font-medium p-3 bg-surface-container/50 rounded-xl border border-outline-variant/10">
+                    <CheckCircle2 size={14} className="text-success" /> {result.correct_answers} Key strengths identified
+                 </div>
+                 <div className="flex items-center gap-3 text-xs text-light font-medium p-3 bg-surface-container/50 rounded-xl border border-outline-variant/10">
+                    <XCircle size={14} className="text-danger" /> {result.wrong_answers} Knowledge gaps detected
+                 </div>
+              </div>
+           </div>
+
+           <button onClick={() => navigate('/exam/setup')} className="w-full py-5 bg-primary text-dark font-bold text-xs uppercase tracking-widest rounded-2xl hover:bg-light transition-all flex items-center justify-center gap-2 group shadow-xl shadow-primary/10">
+              <RotateCcw size={16} className="group-hover:-rotate-45 transition-transform" /> Retake Diagnostic
+           </button>
+           <button onClick={() => navigate('/dashboard')} className="w-full py-5 bg-surface-container border border-outline-variant/20 text-light font-bold text-xs uppercase tracking-widest rounded-2xl hover:bg-surface-lowest transition-all flex items-center justify-center gap-2">
+              <Home size={16} /> Return to Hub
+           </button>
         </div>
       </div>
     </div>

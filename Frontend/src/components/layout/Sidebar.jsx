@@ -6,6 +6,7 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
   };
 
@@ -79,7 +80,7 @@ const Sidebar = () => {
           className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-danger/80 hover:bg-danger/10 hover:text-danger hover:border-danger/20 border border-transparent transition-all duration-200 group mt-2"
         >
           <span className="shrink-0 transition-transform group-hover:scale-110"><LogOut size={20} /></span>
-          <span className="truncate">Terminate Session</span>
+          <span className="truncate">Logout</span>
         </button>
       </div>
 

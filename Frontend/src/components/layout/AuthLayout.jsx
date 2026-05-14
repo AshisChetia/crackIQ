@@ -16,12 +16,12 @@ const AuthLayout = () => {
       <Sidebar />
       
       {/* Main Content Area - padded left by the width of the sidebar (260px) */}
-      <main className="flex-1 ml-[260px] min-h-screen relative overflow-x-hidden">
+      <main className="flex-1 ml-[260px] relative overflow-x-hidden min-h-screen">
         {/* Subtle background glow for all dashboard pages */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-[100%] blur-[120px] pointer-events-none z-0" />
         
-        {/* Content container */}
-        <div className="relative z-10 p-8 md:p-12 max-w-[1440px] mx-auto w-full">
+        {/* Content container - moved padding here and removed from child pages if needed */}
+        <div className="relative z-10 w-full">
           <Outlet />
         </div>
       </main>

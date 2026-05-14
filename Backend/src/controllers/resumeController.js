@@ -4,7 +4,9 @@ import ResumeModel from "../models/resumeModel.js";
 import { analyzeResume, compareResumeToJob } from "../config/ai.js";
 import { uploadToCloudinary } from "../middlewares/uploadMiddleware.js";
 import { sendSuccess } from "../utils/apiResponse.js";
-import pdfParse from "pdf-parse";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse")
 
 
 /*
@@ -144,10 +146,10 @@ export const getResumeAnalysisById = asyncHandler(async (req, res) => {
     return sendSuccess(res, 200, "Resume analysis fetched", {
         resume: {
             ...resume,
-            strengths: JSON.parse(resume.strengths),
-            weaknesses: JSON.parse(resume.weaknesses),
-            missing_skills: JSON.parse(resume.missing_skills),
-            suggestions: JSON.parse(resume.suggestions),
+            strengths: typeof resume.strengths === 'string' ? JSON.parse(resume.strengths) : resume.strengths,
+            weaknesses: typeof resume.weaknesses === 'string' ? JSON.parse(resume.weaknesses) : resume.weaknesses,
+            missing_skills: typeof resume.missing_skills === 'string' ? JSON.parse(resume.missing_skills) : resume.missing_skills,
+            suggestions: typeof resume.suggestions === 'string' ? JSON.parse(resume.suggestions) : resume.suggestions,
         },
     });
 });

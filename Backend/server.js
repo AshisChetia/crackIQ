@@ -1,5 +1,5 @@
+import 'dotenv/config';
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import { connectDB } from "./src/config/db.js";
 import logger from "./src/utils/logger.js";
@@ -15,7 +15,7 @@ import userRoutes from "./src/routes/userRoutes.js";
 import { notFound, errorHandler } from "./src/middlewares/errorMiddleware.js";
 import { apiLimiter } from "./src/middlewares/rateLimiter.js";
 
-dotenv.config();
+
 
 const app = express();
 
