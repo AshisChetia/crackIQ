@@ -74,6 +74,30 @@ class QuestionModel {
             [examId]
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FIND PREVIOUS QUESTIONS FOR UNIQUENESS
+    |--------------------------------------------------------------------------
+    */
+
+    static async findPreviousQuestions(userId, subject, difficulty, limit = 30) {
+
+        const [rows] = await db.execute(
+
+            `
+            SELECT q.question_text
+            FROM questions q
+            JOIN exams e ON q.exam_id = e.id
+            WHERE e.user_id = ? AND e.subject = ? AND e.difficulty = ?
+            ORDER BY q.id DESC
+            LIMIT ${Number(limit)}
+            `,
+            [userId, subject, difficulty]
+        );
+
+        return rows.map(r => r.question_text);
+    }
 }
 
 export default QuestionModel;

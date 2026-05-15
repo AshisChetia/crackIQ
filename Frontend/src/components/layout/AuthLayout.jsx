@@ -4,9 +4,9 @@ import Sidebar from './Sidebar';
 const AuthLayout = () => {
   // Check for authentication token (will be improved with actual auth context later)
   const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
 
-  if (!token) {
-    // Redirect to login if not authenticated
+  if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
 

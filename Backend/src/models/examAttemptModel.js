@@ -26,15 +26,17 @@ class ExamAttemptModel {
                 user_id,
                 exam_id,
                 score,
+                total_questions,
                 correct_answers,
                 wrong_answers
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
             `,
             [
                 user_id,
                 exam_id,
                 score,
+                data.total_questions,
                 correct_answers,
                 wrong_answers,
             ]
@@ -84,7 +86,7 @@ class ExamAttemptModel {
             FROM exam_attempts ea
             JOIN exams e ON ea.exam_id = e.id
             WHERE ea.user_id = ?
-            ORDER BY ea.created_at DESC
+            ORDER BY ea.submitted_at DESC
             `,
             [userId]
         );
@@ -124,7 +126,7 @@ class ExamAttemptModel {
         const [rows] = await db.execute(
 
             `
-            SELECT ROUND(AVG(score), 2) AS average_score
+            SELECT ROUND(AVG((score / total_questions) * 100), 2) AS average_score
             FROM exam_attempts
             WHERE user_id = ?
             `,
@@ -170,7 +172,7 @@ class ExamAttemptModel {
             FROM exam_attempts ea
             JOIN exams e ON ea.exam_id = e.id
             WHERE ea.user_id = ?
-            ORDER BY ea.created_at DESC
+            ORDER BY ea.submitted_at DESC
             LIMIT 5
             `,
             [userId]
@@ -198,8 +200,8 @@ class ExamAttemptModel {
             SELECT
                 e.subject,
                 COUNT(*) AS total_attempts,
-                ROUND(AVG(ea.score), 2) AS average_score,
-                MAX(ea.score) AS highest_score
+                ROUND(AVG((ea.score / ea.total_questions) * 100), 2) AS average_score,
+                MAX((ea.score / ea.total_questions) * 100) AS highest_score
             FROM exam_attempts ea
             JOIN exams e ON ea.exam_id = e.id
             WHERE ea.user_id = ?
@@ -224,13 +226,13 @@ class ExamAttemptModel {
 
             `
             SELECT
-                DATE(ea.created_at) AS date,
+                DATE(ea.submitted_at) AS date,
                 COUNT(*) AS attempts,
-                ROUND(AVG(ea.score), 2) AS average_score
+                ROUND(AVG((ea.score / ea.total_questions) * 100), 2) AS average_score
             FROM exam_attempts ea
             WHERE ea.user_id = ?
-            AND ea.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-            GROUP BY DATE(ea.created_at)
+            AND ea.submitted_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY DATE(ea.submitted_at)
             ORDER BY date ASC
             `,
             [userId]
@@ -252,7 +254,7 @@ class ExamAttemptModel {
             `
             SELECT
                 e.subject,
-                ROUND(AVG(ea.score), 2) AS average_score
+                ROUND(AVG((ea.score / ea.total_questions) * 100), 2) AS average_score
             FROM exam_attempts ea
             JOIN exams e ON ea.exam_id = e.id
             WHERE ea.user_id = ?
@@ -279,7 +281,7 @@ class ExamAttemptModel {
             `
             SELECT
                 e.subject,
-                ROUND(AVG(ea.score), 2) AS average_score
+                ROUND(AVG((ea.score / ea.total_questions) * 100), 2) AS average_score
             FROM exam_attempts ea
             JOIN exams e ON ea.exam_id = e.id
             WHERE ea.user_id = ?
@@ -333,12 +335,12 @@ class ExamAttemptModel {
 
             `
             SELECT
-                DATE(created_at) AS date,
+                DATE(submitted_at) AS date,
                 COUNT(*) AS attempts
             FROM exam_attempts
             WHERE user_id = ?
-            AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            GROUP BY DATE(created_at)
+            AND submitted_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            GROUP BY DATE(submitted_at)
             ORDER BY date ASC
             `,
             [userId]

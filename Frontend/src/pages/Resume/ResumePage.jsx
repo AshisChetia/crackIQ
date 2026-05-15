@@ -13,17 +13,44 @@ const ResumePage = () => {
     if (f) setFile(f);
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
+    if (!file) return;
+    
     setAnalyzing(true);
-    setTimeout(() => {
-      setResult({
-        score: 78,
-        strengths: ['Strong technical skills section', 'Good use of action verbs', 'Relevant project experience'],
-        improvements: ['Add quantifiable metrics to achievements', 'Include more industry keywords', 'Shorten summary to 2-3 lines'],
-        keywords: { found: ['React', 'Node.js', 'SQL', 'Git'], missing: ['Docker', 'AWS', 'CI/CD', 'Agile'] },
+    setResult(null);
+
+    const formData = new FormData();
+    formData.append('resume', file);
+    formData.append('target_role', 'General'); // Could be made dynamic later
+
+    try {
+      const response = await api.post('/resumes/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
+      
+      const { resume } = response.data;
+      
+      // Map backend response to frontend state
+      setResult({
+        score: resume.ats_score,
+        summary: resume.summary, // Added summary
+        strengths: resume.strengths || [],
+        improvements: resume.suggestions || resume.improvements || [],
+        keywords: {
+          found: resume.keywords?.found || resume.missing_skills || [], // Temporary mapping
+          missing: resume.keywords?.missing || []
+        },
+        roleAlignment: resume.roleAlignment,
+        formattingFeedback: resume.formattingFeedback
+      });
+    } catch (err) {
+      console.error("Analysis failed", err);
+      alert("Failed to analyze resume. Please try again.");
+    } finally {
       setAnalyzing(false);
-    }, 2500);
+    }
   };
 
   return (
@@ -85,9 +112,19 @@ const ResumePage = () => {
                   <div className="text-xs text-light-muted">out of 100</div>
                 </div>
 
+                {/* Professional Summary */}
+                {result.summary && (
+                  <div className="rounded-xl border border-border-subtle bg-light/[0.02] p-5">
+                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Brain size={14} className="text-primary" /> Professional Summary</h3>
+                    <p className="text-sm text-light-2 leading-relaxed italic">
+                      "{result.summary}"
+                    </p>
+                  </div>
+                )}
+
                 {/* Strengths */}
                 <div className="rounded-xl border border-border-subtle bg-light/[0.02] p-5">
-                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><CheckCircle2 size={14} className="text-green-400" /> Strengths</h3>
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><CheckCircle2 size={14} className="text-green-400" /> Key Strengths</h3>
                   <ul className="flex flex-col gap-2">
                     {result.strengths.map((s, i) => <li key={i} className="text-sm text-light-2 flex items-start gap-2"><span className="text-green-400 mt-0.5">•</span>{s}</li>)}
                   </ul>
@@ -95,7 +132,7 @@ const ResumePage = () => {
 
                 {/* Improvements */}
                 <div className="rounded-xl border border-border-subtle bg-light/[0.02] p-5">
-                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><AlertCircle size={14} className="text-amber-400" /> Improvements</h3>
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><AlertCircle size={14} className="text-amber-400" /> Actionable Improvements</h3>
                   <ul className="flex flex-col gap-2">
                     {result.improvements.map((s, i) => <li key={i} className="text-sm text-light-2 flex items-start gap-2"><span className="text-amber-400 mt-0.5">•</span>{s}</li>)}
                   </ul>
@@ -103,16 +140,50 @@ const ResumePage = () => {
 
                 {/* Keywords */}
                 <div className="rounded-xl border border-border-subtle bg-light/[0.02] p-5">
-                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp size={14} /> Keyword Analysis</h3>
-                  <div className="mb-3">
-                    <div className="text-[0.65rem] text-light-dim uppercase tracking-wider mb-2">Found</div>
-                    <div className="flex flex-wrap gap-1.5">{result.keywords.found.map((k, i) => <span key={i} className="px-2.5 py-1 rounded-full bg-green-500/10 text-green-400 text-xs font-mono">{k}</span>)}</div>
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp size={14} /> Intelligence & Keywords</h3>
+                  
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[0.65rem] text-light-dim uppercase tracking-wider">Role Alignment</div>
+                      <div className="text-xs font-bold text-primary">{result.roleAlignment || 0}%</div>
+                    </div>
+                    <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                      <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${result.roleAlignment || 0}%` }} />
+                    </div>
                   </div>
+
+                  <div className="mb-4">
+                    <div className="text-[0.65rem] text-light-dim uppercase tracking-wider mb-2">Relevant Keywords Found</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {result.keywords.found.length > 0 ? (
+                        result.keywords.found.map((k, i) => <span key={i} className="px-2.5 py-1 rounded-full bg-green-500/10 text-green-400 text-[10px] font-mono font-bold uppercase">{k}</span>)
+                      ) : (
+                        <span className="text-xs text-light-muted">No specific keywords identified.</span>
+                      )}
+                    </div>
+                  </div>
+                  
                   <div>
-                    <div className="text-[0.65rem] text-light-dim uppercase tracking-wider mb-2">Missing</div>
-                    <div className="flex flex-wrap gap-1.5">{result.keywords.missing.map((k, i) => <span key={i} className="px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-mono">{k}</span>)}</div>
+                    <div className="text-[0.65rem] text-light-dim uppercase tracking-wider mb-2">Critical Keywords Missing</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {result.keywords.missing.length > 0 ? (
+                        result.keywords.missing.map((k, i) => <span key={i} className="px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 text-[10px] font-mono font-bold uppercase">{k}</span>)
+                      ) : (
+                        <span className="text-xs text-light-muted">None identified.</span>
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                {/* Formatting Feedback */}
+                {result.formattingFeedback && (
+                  <div className="rounded-xl border border-border-subtle bg-light/[0.02] p-5">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2 text-outline"><FileText size={14} /> Structure & Formatting</h3>
+                    <p className="text-xs text-light-muted leading-relaxed">
+                      {result.formattingFeedback}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

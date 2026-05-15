@@ -23,7 +23,7 @@ class ResumeModel {
         const [result] = await db.execute(
 
             `
-            INSERT INTO resumes
+            INSERT INTO resume_analyses
             (
                 user_id,
                 resume_url,
@@ -64,7 +64,7 @@ class ResumeModel {
 
             `
             SELECT *
-            FROM resumes
+            FROM resume_analyses
             WHERE id = ?
             LIMIT 1
             `,
@@ -86,7 +86,7 @@ class ResumeModel {
 
             `
             SELECT *
-            FROM resumes
+            FROM resume_analyses
             WHERE user_id = ?
             ORDER BY created_at DESC
             `,
@@ -108,7 +108,7 @@ class ResumeModel {
 
             `
             SELECT COUNT(*) AS total
-            FROM resumes
+            FROM resume_analyses
             WHERE user_id = ?
             `,
             [userId]
@@ -129,7 +129,7 @@ class ResumeModel {
 
             `
             SELECT AVG(ats_score) AS average_ats
-            FROM resumes
+            FROM resume_analyses
             WHERE user_id = ?
             `,
             [userId]
@@ -149,7 +149,7 @@ class ResumeModel {
         await db.execute(
 
             `
-            DELETE FROM resumes
+            DELETE FROM resume_analyses
             WHERE id = ?
             `,
             [id]

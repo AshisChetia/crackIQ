@@ -110,7 +110,7 @@ const HistoryPage = () => {
                     </div>
                   </div>
                   <span className="text-xs text-success font-medium">Completed</span>
-                  <span className="text-xs text-outline font-mono">{new Date(h.created_at).toLocaleDateString()}</span>
+                  <span className="text-xs text-outline font-mono">{new Date(h.submitted_at).toLocaleDateString()}</span>
                   <div className="text-right">
                     <ChevronRight size={16} className="inline text-outline group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>

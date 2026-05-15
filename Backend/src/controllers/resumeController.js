@@ -83,11 +83,18 @@ export const uploadResume = asyncHandler(async (req, res) => {
     const savedResume = await ResumeModel.createOne({
         user_id: userId,
         resume_url: resumeUrl,
-        ats_score: analysis.atsScore,
-        strengths: JSON.stringify(analysis.strengths),
-        weaknesses: JSON.stringify(analysis.weaknesses),
-        missing_skills: JSON.stringify(analysis.missingSkills),
-        suggestions: JSON.stringify(analysis.suggestions),
+        ats_score: analysis.score || analysis.atsScore || 0,
+        strengths: JSON.stringify(analysis.strengths || []),
+        weaknesses: JSON.stringify(analysis.weaknesses || []),
+        missing_skills: JSON.stringify(analysis.keywords?.missing || analysis.missingSkills || []),
+        suggestions: JSON.stringify(analysis.improvements || analysis.suggestions || []),
+        // We can store extra metadata in a column if needed, or just return them
+        metadata: JSON.stringify({
+            summary: analysis.summary,
+            keywords: analysis.keywords,
+            roleAlignment: analysis.roleAlignment,
+            formattingFeedback: analysis.formattingFeedback
+        })
     });
 
     return sendSuccess(res, 201, "Resume analyzed successfully", {
@@ -95,10 +102,12 @@ export const uploadResume = asyncHandler(async (req, res) => {
             id: savedResume.id,
             resume_url: savedResume.resume_url,
             ats_score: savedResume.ats_score,
+            summary: analysis.summary,
             strengths: analysis.strengths,
-            weaknesses: analysis.weaknesses,
-            missing_skills: analysis.missingSkills,
-            suggestions: analysis.suggestions,
+            improvements: analysis.improvements || analysis.suggestions,
+            keywords: analysis.keywords || { found: [], missing: analysis.missingSkills || [] },
+            roleAlignment: analysis.roleAlignment,
+            formattingFeedback: analysis.formattingFeedback
         },
     });
 });

@@ -41,12 +41,16 @@ export const createExam = asyncHandler(async (req, res) => {
         throw new Error("Questions must be between 5 and 50")
     };
 
+    // Fetch previous questions for this user to avoid duplication
+    const previousQuestions = await QuestionModel.findPreviousQuestions(userId, subject, difficulty, 30);
+
     //Generate AI Questions
     const questions = await generateMCQs({
         exam: exam_name,
         subject,
         difficulty,
         questionCount: total_questions,
+        previousQuestions,
     });
 
     if(!questions || !Array.isArray(questions) || questions.length === 0) {
@@ -69,19 +73,20 @@ export const createExam = asyncHandler(async (req, res) => {
     //Save Questions
     const formattedQuestions = questions.map((q) => ({
         exam_id: exam.id,
-        question_text: q.question,
-        options: JSON.stringify(q.options),
-        correct_answer: q.correct_answer,
-        explanation: q.explanation || "",
+        question_text: q.question_text || q.question || "Untitled Question",
+        options: JSON.stringify(q.options || []),
+        correct_answer: q.correct_answer || "A",
+        explanation: q.explanation || "No explanation provided.",
     }));
 
     await QuestionModel.createMany(formattedQuestions);
 
     //Remove Answers Before Sending To Frontend
     const safeQuestions = questions.map((q, index) => ({
+        question_id: q.question_id, // include if exists
         question_number: index + 1,
-        question: q.question,
-        options: q.options
+        question: q.question_text || q.question || "Untitled Question",
+        options: q.options || []
     }))
 
     return sendSuccess(res, 201, "Exam created successfully", {
@@ -108,8 +113,7 @@ export const submitExam = asyncHandler(async (req, res) => {
         throw new Error("Exam ID and answers are required")
     };
 
-    //Validate answers array
-    if(!Array.isArray(answers) || answers.length === 0) {
+    if(!Array.isArray(answers)) {
         res.status(400);
         throw new Error("Invalid answers format")
     };
@@ -195,6 +199,7 @@ export const submitExam = asyncHandler(async (req, res) => {
 
     return sendSuccess(res, 200, "Exam submitted successfully", {
         result: {
+            id: attempt.id,
             score,
             total_questions: questions.length,
             correct_answers: correctAnswers,
@@ -359,6 +364,11 @@ export const regenerateQuestions = asyncHandler(async (req, res) => {
         throw new Error("Exam not found");
     }
 
+    const userId = req.user.id;
+
+    // Fetch previous questions to avoid duplication
+    const previousQuestions = await QuestionModel.findPreviousQuestions(userId, exam.subject, exam.difficulty, 30);
+
     const newQuestions = await generateMCQs({
 
         exam: exam.exam_name,
@@ -368,21 +378,19 @@ export const regenerateQuestions = asyncHandler(async (req, res) => {
         difficulty: exam.difficulty,
 
         questionCount: exam.total_questions,
+
+        previousQuestions,
     });
 
     await QuestionModel.deleteByExamId(examId);
 
+    //Save Questions
     const formattedQuestions = newQuestions.map((q) => ({
-
         exam_id: examId,
-
-        question_text: q.question,
-
-        options: JSON.stringify(q.options),
-
-        correct_answer: q.correct_answer,
-
-        explanation: q.explanation || "",
+        question_text: q.question_text || q.question || "Untitled Question",
+        options: JSON.stringify(q.options || []),
+        correct_answer: q.correct_answer || "A",
+        explanation: q.explanation || "No explanation provided.",
     }));
 
     await QuestionModel.createMany(formattedQuestions);

@@ -45,9 +45,15 @@ class UserAnswerModel {
         const [rows] = await db.execute(
 
             `
-            SELECT *
-            FROM user_answers
-            WHERE attempt_id = ?
+            SELECT 
+                ua.*, 
+                q.question_text, 
+                q.options, 
+                q.correct_answer, 
+                q.explanation
+            FROM user_answers ua
+            JOIN questions q ON ua.question_id = q.id
+            WHERE ua.attempt_id = ?
             `,
             [attemptId]
         );

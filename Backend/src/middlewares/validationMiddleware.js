@@ -187,10 +187,7 @@ export const validateSubmitExam = (
         );
     }
 
-    if (
-        !Array.isArray(answers) ||
-        answers.length === 0
-    ) {
+    if (!Array.isArray(answers)) {
 
         res.status(400);
 

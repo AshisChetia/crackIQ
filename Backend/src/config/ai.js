@@ -37,7 +37,7 @@ const groq = new Groq({ apiKey: GROQ_API });
 | If the API key hits a rate limit or fails, it falls back to mock data.
 |
 */
-const generateContentWithFallback = async (prompt) => {
+const generateContentWithFallback = async (prompt, customTemperature = 0.5) => {
     try {
         const response = await groq.chat.completions.create({
             messages: [
@@ -51,7 +51,7 @@ const generateContentWithFallback = async (prompt) => {
                 }
             ],
             model: "llama-3.3-70b-versatile",
-            temperature: 0.5,
+            temperature: customTemperature,
         });
 
         return response.choices[0]?.message?.content || "";
@@ -167,6 +167,7 @@ export const generateMCQs = async ({
     subject,
     difficulty,
     questionCount,
+    previousQuestions = [],
 }) => {
     try {
         const prompt = `
@@ -177,33 +178,37 @@ export const generateMCQs = async ({
         Subject: ${subject}
         Difficulty: ${difficulty}
         
+        ${previousQuestions.length > 0 ? `CRITICAL REQUIREMENT: Do NOT generate any of the following questions. Provide completely new and unique questions:\n${previousQuestions.map(q => `- ${q}`).join('\n')}` : ''}
+        
         Requirements:
         - Each question must have 4 options
         - Only one correct answer
         - Questions must be realistic
         - Avoid duplicate questions
-        - Keep language clear
-        - Return only valid JSON
+        - Make these questions highly unique and different from typical examples (Random Seed: ${Date.now()}-${Math.random()})
+        - CRITICAL: Double-check all mathematical calculations. 
+        - LOGIC FLOW: 1. Solve the question yourself first -> 2. Generate the options based on your solution -> 3. Assign the "correct_answer" letter (A, B, C, or D) to the option that matches your solution.
+        - Ensure the "correct_answer" letter EXACTLY matches the option that contains the right answer.
+        - The explanation must be accurate and directly support the correct answer.
+        - RESPONSE FORMAT: You must FIRST provide a "Reasoning:" section where you solve each question step-by-step. THEN provide the final results in a \`\`\`json [JSON] \`\`\` block.
         
-        JSON Format:
-
+        Example Response:
+        Reasoning:
+        1. [Reasoning for Q1]
+        2. [Reasoning for Q2]
+        
+        \`\`\`json
         [
             {
-                "question": "Question text",
-                "options": [
-                    "Option 1",
-                    "Option 2",
-                    "Option 3",
-                    "Option 4"
-                ],
+                "question_text": "A man buys...",
+                "options": ["₹145", "₹155", "₹160", "₹175"],
                 "correct_answer": "A",
-                "explanation": "Short explanation"
+                "explanation": "Calculated by..."
             }
         ]
-        
-        Note: correct_answer must be one of "A", "B", "C", or "D".
+        \`\`\`
 `;
-        const response = await generateContentWithFallback(prompt);
+        const response = await generateContentWithFallback(prompt, 0.5);
 
         return cleanJsonResponse(response);
 
@@ -251,26 +256,18 @@ export const analyzeResume = async ({
         Resume Content:
         ${resumeText}
 
-        Return ONLY valid JSON.
-
-        JSON Format:
+        Return ONLY valid JSON in this exact format:
         {
-            "atsScore": 85,
-            "strengths": [
-              "Strong backend projects",
-              "Good technical skills"
-            ],
-            "weaknesses": [
-              "No internship experience"
-            ],
-            "missingSkills": [
-              "Docker",
-              "Redis"
-            ],
-            "suggestions": [
-              "Add measurable achievements",
-              "Improve project descriptions"
-            ]
+            "score": 85,
+            "summary": "Detailed overview of the candidate...",
+            "strengths": ["...", "...", "..."],
+            "improvements": ["...", "...", "..."],
+            "keywords": {
+                "found": ["React", "Node.js"],
+                "missing": ["AWS", "Docker"]
+            },
+            "roleAlignment": 90,
+            "formattingFeedback": "Detailed structural feedback..."
         }
         `;
 

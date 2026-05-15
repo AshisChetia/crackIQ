@@ -56,7 +56,6 @@ const ExamPage = () => {
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(timer);
-          // Auto submit logic could go here
           return 0;
         }
         return t - 1;
@@ -64,6 +63,13 @@ const ExamPage = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft, loading, submitting]);
+
+  useEffect(() => {
+    if (timeLeft === 0 && !loading && !submitting && exam) {
+      handleSubmit(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, loading, submitting, exam]);
 
   // Question Transition Animation
   useEffect(() => {
@@ -75,11 +81,11 @@ const ExamPage = () => {
     }
   }, [currentQ, loading]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (isAutoSubmit = false) => {
     const answeredCount = Object.keys(selected).length;
     const totalCount = questions.length;
     
-    if (answeredCount < totalCount) {
+    if (isAutoSubmit !== true && answeredCount < totalCount) {
       if (!window.confirm(`You have only answered ${answeredCount}/${totalCount} questions. Are you sure you want to submit?`)) {
         return;
       }
@@ -92,12 +98,17 @@ const ExamPage = () => {
         selected_answer: ans
       }));
 
-      const response = await api.post('/exams/submit', {
+      const response = await api.post(`/exams/${examId}/submit`, {
         exam_id: parseInt(examId),
         answers: formattedAnswers
       });
 
-      navigate('/exam/results', { state: { result: response.data.result } });
+      navigate('/exam/results', { 
+        state: { 
+          result: response.data.result,
+          answers: response.data.answers 
+        } 
+      });
     } catch (err) {
       console.error("Failed to submit exam:", err);
       alert("Submission failed. Please check your connection.");
@@ -146,7 +157,7 @@ const ExamPage = () => {
       <div className={`fixed inset-y-0 right-0 w-80 bg-surface-lowest border-l border-outline-variant/20 z-50 transform transition-transform duration-300 ease-spring ${showNavigator ? 'translate-x-0' : 'translate-x-full'} shadow-2xl`}>
         <div className="p-8 h-full flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-outline">Question Navigator</h3>
+            <h3 className="text-sm font-bold uppercase tracking-widest text-outline">Question Navigator</h3>
             <button onClick={() => setShowNavigator(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container transition-colors"><X size={18}/></button>
           </div>
           
@@ -155,7 +166,7 @@ const ExamPage = () => {
               <button
                 key={i}
                 onClick={() => { setCurrentQ(i); setShowNavigator(false); }}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all border
+                className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all border
                   ${currentQ === i ? 'bg-primary text-dark border-primary shadow-[0_0_15px_rgba(207,188,255,0.3)]' : 
                     selected[questions[i].question_id] ? 'bg-success/10 text-success border-success/30' : 
                     'bg-surface-container border-outline-variant/30 text-outline hover:border-primary/50'}
@@ -168,7 +179,7 @@ const ExamPage = () => {
 
           <div className="mt-8 pt-8 border-t border-outline-variant/10">
             <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-outline">
+              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-outline">
                 <span>Attempted</span>
                 <span className="text-light">{Object.keys(selected).length} / {totalQ}</span>
               </div>
@@ -182,7 +193,7 @@ const ExamPage = () => {
 
       {/* ─── HEADER ─── */}
       <div className="flex items-center justify-between px-6 lg:px-12 py-5 border-b border-outline-variant/10 bg-dark/80 backdrop-blur-xl sticky top-0 z-40">
-        <button onClick={() => window.confirm("Abandon this session? Your progress will not be saved.") && navigate('/dashboard')} className="flex items-center gap-2 text-[10px] font-bold text-outline uppercase tracking-widest hover:text-danger transition-all">
+        <button onClick={() => window.confirm("Abandon this session? Your progress will not be saved.") && navigate('/dashboard')} className="flex items-center gap-2 text-xs font-bold text-outline uppercase tracking-widest hover:text-danger transition-all">
           <X size={14} /> Abandon
         </button>
         
@@ -223,22 +234,22 @@ const ExamPage = () => {
           {/* Question Meta */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
-               <span className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary uppercase tracking-[0.2em]">
+               <span className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary uppercase tracking-[0.2em]">
                  Question {currentQ + 1}
                </span>
-               <span className="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">
+               <span className="text-xs font-bold text-outline uppercase tracking-[0.2em]">
                  {exam?.subject} • {exam?.difficulty}
                </span>
             </div>
             {selected[q?.question_id] && (
-              <div className="flex items-center gap-2 text-success text-[10px] font-bold uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-success text-xs font-bold uppercase tracking-widest">
                 <CheckCircle2 size={14} /> Answered
               </div>
             )}
           </div>
           
           {/* Question Text */}
-          <h2 className="text-2xl md:text-4xl font-bold leading-tight mb-12 text-light font-display">
+          <h2 className="text-3xl md:text-5xl font-bold leading-tight mb-12 text-light font-display">
             {q?.question}
           </h2>
 
@@ -251,6 +262,7 @@ const ExamPage = () => {
               return (
                 <button
                   key={idx}
+                  disabled={submitting}
                   onClick={() => setSelected({ ...selected, [q.question_id]: optionLabel })}
                   className={`flex items-start gap-4 w-full text-left p-6 rounded-2xl border-2 transition-all duration-200 group relative overflow-hidden
                     ${isSelected
@@ -258,11 +270,11 @@ const ExamPage = () => {
                       : 'border-outline-variant/10 hover:border-outline-variant/30 hover:bg-surface-lowest'
                     }`}
                 >
-                  <span className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold font-mono border-2 transition-all
+                  <span className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold font-mono border-2 transition-all
                     ${isSelected ? 'bg-primary text-dark border-primary' : 'bg-surface-container border-outline-variant/20 text-outline'}`}>
                     {optionLabel}
                   </span>
-                  <span className={`text-base leading-relaxed pt-0.5 ${isSelected ? 'text-light font-semibold' : 'text-outline group-hover:text-light'}`}>
+                  <span className={`text-lg leading-relaxed pt-0.5 ${isSelected ? 'text-light font-semibold' : 'text-outline group-hover:text-light'}`}>
                     {opt}
                   </span>
                   {isSelected && (
@@ -283,7 +295,7 @@ const ExamPage = () => {
           <button
             onClick={() => setCurrentQ(Math.max(0, currentQ - 1))}
             disabled={currentQ === 0}
-            className="flex items-center gap-3 px-6 py-3 text-xs font-bold uppercase tracking-widest text-outline hover:text-light transition-all disabled:opacity-20 cursor-pointer"
+            className="flex items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-widest text-outline hover:text-light transition-all disabled:opacity-20 cursor-pointer"
           >
             <ChevronLeft size={18} /> Previous
           </button>
@@ -298,7 +310,7 @@ const ExamPage = () => {
             {currentQ < totalQ - 1 ? (
               <button
                 onClick={() => setCurrentQ(currentQ + 1)}
-                className="flex items-center gap-3 px-8 py-3 bg-light text-dark font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-primary transition-all shadow-lg cursor-pointer"
+                className="flex items-center gap-3 px-8 py-3 bg-light text-dark font-bold text-sm uppercase tracking-widest rounded-xl hover:bg-primary transition-all shadow-lg cursor-pointer"
               >
                 Next Step <ChevronRight size={18} />
               </button>
@@ -306,7 +318,7 @@ const ExamPage = () => {
               <button
                 disabled={submitting}
                 onClick={handleSubmit}
-                className="flex items-center gap-3 px-10 py-3 bg-primary text-dark font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-light transition-all shadow-[0_0_30px_rgba(207,188,255,0.3)] disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-3 px-10 py-3 bg-primary text-dark font-bold text-sm uppercase tracking-widest rounded-xl hover:bg-light transition-all shadow-[0_0_30px_rgba(207,188,255,0.3)] disabled:opacity-50 cursor-pointer"
               >
                 {submitting ? <Loader2 className="animate-spin" size={18} /> : <><Zap size={18} /> Finalize Session</>}
               </button>

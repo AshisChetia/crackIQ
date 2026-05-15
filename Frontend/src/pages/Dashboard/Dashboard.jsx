@@ -68,7 +68,7 @@ const Dashboard = () => {
           <div key={i} className="p-6 rounded-2xl border border-outline-variant/20 bg-surface-lowest/50 hover:bg-surface-lowest transition-all group">
             <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl ${card.color} mb-4 border border-current/10`}>{card.icon}</div>
             <div className="text-3xl font-bold font-mono tracking-tight text-light mb-1">{card.value}</div>
-            <div className="text-[10px] text-outline uppercase tracking-widest font-bold">{card.label}</div>
+            <div className="text-xs text-outline uppercase tracking-widest font-bold">{card.label}</div>
           </div>
         ))}
       </div>
@@ -78,7 +78,7 @@ const Dashboard = () => {
         <div className="lg:col-span-2 rounded-2xl border border-outline-variant/20 bg-surface-lowest/50 overflow-hidden">
           <div className="flex items-center justify-between p-6 border-b border-outline-variant/10 bg-surface-container/30">
             <h2 className="font-bold text-sm text-light uppercase tracking-widest">Recent Sessions</h2>
-            <Link to="/history" className="text-[10px] font-bold text-outline hover:text-primary flex items-center gap-1 transition-all uppercase tracking-widest">View All <ChevronRight size={14} /></Link>
+            <Link to="/history" className="text-xs font-bold text-outline hover:text-primary flex items-center gap-1 transition-all uppercase tracking-widest">View All <ChevronRight size={14} /></Link>
           </div>
           
           {data.exams.recent_attempts?.length > 0 ? (
@@ -87,8 +87,8 @@ const Dashboard = () => {
                 <div key={i} className="flex items-center justify-between p-6 hover:bg-surface-container/30 transition-colors">
                   <div className="flex-1">
                     <div className="font-semibold text-sm text-light mb-1">{exam.exam_name || 'Generic Assessment'}</div>
-                    <div className="flex items-center gap-3 text-[10px] text-outline font-bold uppercase tracking-wider">
-                      <span>{new Date(exam.created_at).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-3 text-xs text-outline font-bold uppercase tracking-wider">
+                      <span>{new Date(exam.submitted_at).toLocaleDateString()}</span>
                       <span className="px-2 py-0.5 rounded-lg bg-surface-container text-outline">{exam.difficulty}</span>
                     </div>
                   </div>
@@ -108,7 +108,7 @@ const Dashboard = () => {
                </div>
                <h3 className="text-base font-bold text-light mb-2">No Active Records</h3>
                <p className="text-xs text-outline max-w-[240px] mb-8 leading-relaxed">Your performance database is empty. Initiate a simulation to begin tracking.</p>
-               <Link to="/exam/setup" className="px-6 py-2.5 bg-primary text-dark font-bold text-[10px] uppercase tracking-widest rounded-xl hover:bg-light transition-all shadow-lg shadow-primary/5">
+               <Link to="/exam/setup" className="px-6 py-2.5 bg-primary text-dark font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-light transition-all shadow-lg shadow-primary/5">
                 Start Session
                </Link>
             </div>
@@ -132,11 +132,11 @@ const Dashboard = () => {
                   <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
                     <div className="h-full bg-warning transition-all duration-500" style={{ width: `${data.weakest_subject.average_score}%` }} />
                   </div>
-                  <p className="text-[10px] text-outline mt-4 leading-relaxed font-medium">This vector shows high variance. Targeted reinforcement of core principles is recommended.</p>
+                  <p className="text-xs text-outline mt-4 leading-relaxed font-medium">This vector shows high variance. Targeted reinforcement of core principles is recommended.</p>
                 </div>
               ) : (
                 <div className="text-center py-6">
-                  <p className="text-[10px] text-outline font-bold uppercase tracking-widest">Awaiting Analysis...</p>
+                  <p className="text-xs text-outline font-bold uppercase tracking-widest">Awaiting Analysis...</p>
                 </div>
               )}
             </div>
@@ -150,7 +150,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 border border-primary/10 group-hover:bg-primary group-hover:text-dark transition-all"><Zap size={18} /></div>
                 <div className="flex-1">
                   <div className="text-sm font-bold text-light">New Simulation</div>
-                  <div className="text-[10px] text-outline font-medium">Start diagnostic test</div>
+                  <div className="text-xs text-outline font-medium">Start diagnostic test</div>
                 </div>
                 <ArrowRight size={16} className="text-outline group-hover:text-primary transition-all" />
               </Link>
@@ -158,7 +158,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-warning/10 border border-warning/10 group-hover:bg-warning group-hover:text-dark transition-all"><FileText size={18} /></div>
                 <div className="flex-1">
                   <div className="text-sm font-bold text-light">Resume Lab</div>
-                  <div className="text-[10px] text-outline font-medium">Analyze ATS Score</div>
+                  <div className="text-xs text-outline font-medium">Analyze ATS Score</div>
                 </div>
                 <ArrowRight size={16} className="text-outline group-hover:text-warning transition-all" />
               </Link>
