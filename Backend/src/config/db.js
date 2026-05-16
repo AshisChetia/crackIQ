@@ -13,6 +13,8 @@ export const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
     ssl: {
         minVersion: "TLSv1.2",
         rejectUnauthorized: true

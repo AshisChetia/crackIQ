@@ -9,10 +9,10 @@ class ResumeModel {
     */
 
     static async createOne(data) {
-
+        // 1. We removed resume_url and added target_role here:
         const {
             user_id,
-            resume_url,
+            target_role, 
             ats_score,
             strengths,
             weaknesses,
@@ -21,12 +21,11 @@ class ResumeModel {
         } = data;
 
         const [result] = await db.execute(
-
             `
             INSERT INTO resume_analyses
             (
                 user_id,
-                resume_url,
+                target_role,
                 ats_score,
                 strengths,
                 weaknesses,
@@ -37,7 +36,7 @@ class ResumeModel {
             `,
             [
                 user_id,
-                resume_url,
+                target_role,
                 ats_score,
                 strengths,
                 weaknesses,

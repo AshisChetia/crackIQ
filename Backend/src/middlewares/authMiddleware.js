@@ -42,8 +42,14 @@ export const protect = asyncHandler(async (req, res, next) => {
 
         next();
     } catch (error) {
-        console.error(`Auth Failed: ${error.message} for token: ${token.substring(0, 10)}...`);
+        console.error(`Auth Failed: ${error.message} for route ${req.originalUrl}`);
+        
+        if (error.message.includes('ECONNRESET')) {
+            res.status(503);
+            return next(new Error("Database connection reset. Please try again."));
+        }
+
         res.status(401);
-        throw new Error("Invalid or expired token");
+        next(new Error("Invalid or expired token"));
     }
 });

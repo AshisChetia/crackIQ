@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from "express";
 import cors from "cors";
+// Triggering server restart to apply middleware changes
 import { connectDB } from "./src/config/db.js";
 import logger from "./src/utils/logger.js";
 

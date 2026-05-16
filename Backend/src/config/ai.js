@@ -50,7 +50,7 @@ const generateContentWithFallback = async (prompt, customTemperature = 0.5) => {
                     content: prompt
                 }
             ],
-            model: "llama-3.3-70b-versatile",
+            model: "llama-3.1-8b-instant",
             temperature: customTemperature,
         });
 
@@ -271,7 +271,7 @@ export const analyzeResume = async ({
         }
         `;
 
-        const response = await generateContentWithFallback(prompt);
+        const response = await generateContentWithFallback(prompt, 0.4); // Slightly lower temp for faster/more consistent JSON
 
         return cleanJsonResponse(response);
     } catch (error) {
